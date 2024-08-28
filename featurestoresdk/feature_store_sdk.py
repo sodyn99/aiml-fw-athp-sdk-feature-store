@@ -74,15 +74,15 @@ class FeatureStoreSdk:
             merged_df = pd.DataFrame()
             nospaced_feat = []
             spaced_feat = []
+
+            nospaced_feat.append('"__Id"')
+
             if len(features) > 0:
                 for feature in features:
-                    # FS maintains case sensitivity of feature, hence wrapping search inside ""
                     feature = '"' + feature + '"'
                     if feature.find(" ") > 0:
-                        self.logger.debug(feature + " has empty space")
                         spaced_feat.append(feature)
                     else:
-                        self.logger.debug(feature + " does not have empty space")
                         nospaced_feat.append(feature)
 
             # Fetch all non spaced features in one query
@@ -90,24 +90,20 @@ class FeatureStoreSdk:
             response_nonspace = self.session.execute(nospace_q, timeout=None)
             merged_df = pd.DataFrame(response_nonspace)
 
-            self.logger.debug("Non spaced pd" + str(merged_df.head()))
-            # Fetch all spaced feature data one by one and merge with non spaced dataframe
             if len(spaced_feat) > 0:
                 for feature in spaced_feat:
                     space_q = self.build_fetch_query_single(trainingjob_name, feature)
-                    response_nonspace = self.session.execute(space_q, timeout=None)
-                    space_pd = pd.DataFrame(response_nonspace)
+                    response_space = self.session.execute(space_q, timeout=None)
+                    space_pd = pd.DataFrame(response_space)
                     feature = feature.replace('"', "")
-                    space_pd.columns = [
-                        feature
-                    ]  # Rename the column as supplied in function parameter
-                    # Check null or pd size
-                    merged_df = pd.concat([merged_df, space_pd], axis=1)
+                    space_pd.columns = [feature]
+                    merged_df = pd.merge(merged_df, space_pd, left_index=True, right_index=True)
 
-            # Test if pipeline can access this result
-            self.logger.debug(
-                "Select pipeline merged_df --> \n" + str(merged_df.head())
-            )
+            if "Id" in merged_df.columns:
+                merged_df = merged_df.sort_values(by="Id")
+                merged_df = merged_df.set_index("Id")
+            print("df columns: ", merged_df.columns)
+
             return merged_df
 
         except Exception as exc:
