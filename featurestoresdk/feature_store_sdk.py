@@ -101,8 +101,8 @@ class FeatureStoreSdk:
 
             if "Id" in merged_df.columns:
                 merged_df = merged_df.sort_values(by="Id")
-                merged_df = merged_df.set_index("Id")
-            print("df columns: ", merged_df.columns)
+                merged_df = merged_df.set_index("Id", drop=True)
+                merged_df.index.name = None
 
             return merged_df
 
