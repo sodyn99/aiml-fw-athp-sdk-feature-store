@@ -30,3 +30,8 @@ sudo buildctl --addr=nerdctl-container://buildkitd build \
     --output type=oci,name=traininghost/pipelineimage:sungjin | sudo nerdctl load --namespace k8s.io
 ```
 
+`aimlfw-dep`에서
+
+```bash
+bin/build_default_pipeline_image.sh
+```
